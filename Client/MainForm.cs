@@ -20,30 +20,7 @@ namespace Client
             ShowLogInForm();
         }
 
-        private void OnLogInButtonClicked(object sender, EventArgs e)
-        {
-            // TODO: Implement authentication
-            ShowChatForm();
-        }
-
-        private void OnSignUpInsteadClicked(object sender, EventArgs e)
-        {
-            ShowSignUpForm();
-        }
-
-        private void OnSignUpButtonClicked(object sender, EventArgs e)
-        {
-            // TODO: Implement user registration
-            ShowLogInForm();
-        }
-
-        private void OnLogInInsteadClicked(object sender, EventArgs e)
-        {
-            ShowLogInForm();
-        }
-
-        #region Application Views
-
+        #region Form Switch Logic
         private Form _activeForm;
         private LogInForm _logInForm;
         private SignUpForm _signUpForm;
@@ -51,6 +28,8 @@ namespace Client
 
         private void LoadForm(Form f)
         {
+            SuspendLayout();
+
             if (_activeForm != null)
             {
                 ContentPanel.Controls.Remove(_activeForm);
@@ -62,6 +41,8 @@ namespace Client
             _activeForm.Dock = DockStyle.Fill;
             ContentPanel.Controls.Add(_activeForm);
             _activeForm.Show();
+            
+            ResumeLayout();
         }
 
         public void ShowLogInForm()
@@ -92,7 +73,30 @@ namespace Client
                 _chatForm = new ChatForm();
             LoadForm(_chatForm);
         }
+        #endregion
 
+        #region Application Flow
+        private void OnLogInButtonClicked(object sender, EventArgs e)
+        {
+            // TODO: Implement authentication
+            ShowChatForm();
+        }
+
+        private void OnSignUpInsteadClicked(object sender, EventArgs e)
+        {
+            ShowSignUpForm();
+        }
+
+        private void OnSignUpButtonClicked(object sender, EventArgs e)
+        {
+            // TODO: Implement user registration
+            ShowLogInForm();
+        }
+
+        private void OnLogInInsteadClicked(object sender, EventArgs e)
+        {
+            ShowLogInForm();
+        }
         #endregion
     }
 }
