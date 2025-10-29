@@ -49,6 +49,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\ChatItem.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\ChatItem.Designer.cs">
+      <DependentUpon>ChatItem.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\RoundedButton.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\RoundedButton.Designer.cs">
+      <DependentUpon>RoundedButton.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\RoundedPicture.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\RoundedPicture.Designer.cs">
+      <DependentUpon>RoundedPicture.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\ChatForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -75,6 +93,15 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Controls\ChatItem.resx">
+      <DependentUpon>ChatItem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\RoundedButton.resx">
+      <DependentUpon>RoundedButton.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\RoundedPicture.resx">
+      <DependentUpon>RoundedPicture.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\ChatForm.resx">
       <DependentUpon>ChatForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -109,6 +136,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\logout.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
