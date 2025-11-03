@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
+using Common.Models;
 
 namespace Client.Forms
 {
     public partial class LogInForm : Form
     {
-        public event EventHandler LogInButtonClicked;
+        public event Action<User> LogInButtonClicked;
         public event EventHandler SignUpInsteadClicked;
 
         public LogInForm()
@@ -34,7 +29,11 @@ namespace Client.Forms
 
         private void LogInButton_Click(object sender, EventArgs e)
         {
-            LogInButtonClicked?.Invoke(this, EventArgs.Empty);
+            LogInButtonClicked?.Invoke(new User
+            {
+                Name = UsernameField.Text.Trim(),
+                HashedPassword = PasswordField.Text.Trim()
+            });
         }
 
         private void SignUpInstead_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

@@ -1,14 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using Common.Models;
+using Common.Network;
 using Client.Forms;
+using Client.Network;
+using System.Text.Json;
+using System.Net.Sockets;
+using System.IO;
+using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace Client
 {
@@ -17,6 +18,11 @@ namespace Client
         public MainForm()
         {
             InitializeComponent();
+            InitializeApplication();
+        }
+
+        public void InitializeApplication()
+        {
             ShowLogInForm();
         }
 
@@ -67,35 +73,112 @@ namespace Client
             LoadForm(_signUpForm);
         }
 
-        public void ShowChatForm()
+        public void ShowChatForm(User user)
         {
             if (_chatForm == null || _chatForm.IsDisposed)
                 _chatForm = new ChatForm();
+            _chatForm.CurrentUser = user;
             LoadForm(_chatForm);
         }
         #endregion
 
-        #region Application Flow
-        private void OnLogInButtonClicked(object sender, EventArgs e)
+        #region Application Flow Logic
+        private async void OnSignUpButtonClicked(User user)
         {
-            // TODO: Implement authentication
-            ShowChatForm();
+            await SendMessage(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.Signup,
+                Payload = JsonSerializer.Serialize(user)
+            });
+        }
+
+        private void OnLogInInsteadClicked(object sender, EventArgs e)
+        {
+            ShowLogInForm();
+        }
+
+        private async void OnLogInButtonClicked(User user)
+        {
+            await SendMessage(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.Login,
+                Payload = JsonSerializer.Serialize(user)
+            });
         }
 
         private void OnSignUpInsteadClicked(object sender, EventArgs e)
         {
             ShowSignUpForm();
         }
+        #endregion
 
-        private void OnSignUpButtonClicked(object sender, EventArgs e)
+        #region Tcp Client Logic
+        private TcpClient _client;
+        private StreamWriter _writer;
+        private StreamReader _reader;
+
+        private async void MainForm_Load(object sender, EventArgs e)
         {
-            // TODO: Implement user registration
-            ShowLogInForm();
+            string serverIp = "10.0.2.15";
+            int port = 6969;
+            _client = new TcpClient();
+            await _client.ConnectAsync(serverIp, port);
+
+            var stream = _client.GetStream();
+            _writer = new StreamWriter(stream) { AutoFlush = true };
+            _reader = new StreamReader(stream);
+
+            _ = Task.Run(Listen);
         }
 
-        private void OnLogInInsteadClicked(object sender, EventArgs e)
+        private async Task Listen()
         {
-            ShowLogInForm();
+            string line;
+            while ((line = await _reader.ReadLineAsync()) != null)
+            {
+                var msg = JsonSerializer.Deserialize<NetworkMessage>(line);
+                HandleMessage(msg);
+            }
+        }
+
+        private async Task SendMessage(NetworkMessage msg)
+        {
+            string json = JsonSerializer.Serialize(msg);
+            await _writer.WriteLineAsync(json);
+        }
+
+        private void HandleMessage(NetworkMessage msg)
+        {
+            switch (msg.MessageType)
+            {
+                case NetworkMessageType.Error:
+                    string errorMsg = msg.GetPayload<string>();
+                    MessageBox.Show(
+                        errorMsg, 
+                        "Error", 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Error);
+                    break;
+                case NetworkMessageType.Signup:
+                    MessageBox.Show(
+                        "Signed up successfuly",
+                        "Signup",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    ShowLogInForm();
+                    break;
+                case NetworkMessageType.Login:
+                    ShowChatForm(msg.GetPayload<User>());
+                    break;
+                //case NetworkMessageType.Login:
+                //    break;
+                //case NetworkMessageType.Login:
+                //    break;
+                //case NetworkMessageType.Login:
+                //    break;
+                //case NetworkMessageType.Login:
+                //    break;
+            }
         }
         #endregion
     }
