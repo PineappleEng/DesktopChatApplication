@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server
+namespace Server.Network
 {
-    internal class Program
+    internal class ChatServer
     {
-        static void Main(string[] args)
-        {
-        }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Shared.Models
+﻿namespace Common.Models
 {
     public class Chat
     {
