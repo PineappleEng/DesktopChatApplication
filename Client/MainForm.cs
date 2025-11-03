@@ -1,23 +1,40 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using Common.Models;
+using Common.Network;
 using Client.Forms;
+using Client.Network;
+using System.Text.Json;
 
 namespace Client
 {
     public partial class MainForm : Form
     {
+        private ChatClient _client;
+
         public MainForm()
         {
             InitializeComponent();
             ShowLogInForm();
+        }
+
+        public void InitializeApplication()
+        {
+            ShowLogInForm();
+            _client = new ChatClient();
+            _client.MessageReceived += OnMessageReceived;
+            _client.Disconnected += OnDisconnected;
+        }
+
+        private void OnMessageReceived(NetworkMessage msg)
+        {
+
+        }
+
+        private void OnDisconnected()
+        {
+            _client.Disconnect();
         }
 
         #region Form Switch Logic
@@ -76,9 +93,19 @@ namespace Client
         #endregion
 
         #region Application Flow
-        private void OnLogInButtonClicked(object sender, EventArgs e)
+        private async void OnLogInButtonClicked(string username, string rawPassword)
         {
-            // TODO: Implement authentication
+            var networkMessage = new NetworkMessage
+            {
+                MessageType = NetworkMessageType.Login,
+                Payload = JsonSerializer.Serialize(new User
+                {
+                    Name = username,
+                    HashedPassword = rawPassword
+                })
+            };
+            await _client.SendMessage(networkMessage);
+            // TODO: Wait for a response
             ShowChatForm();
         }
 
@@ -98,5 +125,10 @@ namespace Client
             ShowLogInForm();
         }
         #endregion
+
+        private async void MainForm_Load(object sender, EventArgs e)
+        {
+            await _client.Connect("", 0);
+        }
     }
 }
