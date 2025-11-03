@@ -14,26 +14,45 @@ namespace Server
 {
     internal class ChatServer
     {
-        private static ChatDatabase database = new ChatDatabase();
+        private static readonly ChatDatabase database = new ChatDatabase();
 
-        // Concurrent dictionary to store active clients and their writers
-        private static ConcurrentDictionary<TcpClient, StreamWriter> clients
+        // Active clients and their StreamWriters
+        private static readonly ConcurrentDictionary<TcpClient, StreamWriter> clients
             = new ConcurrentDictionary<TcpClient, StreamWriter>();
 
         static async Task Main()
         {
-            IPAddress localAddr = IPAddress.Parse("10.0.2.15"); // Replace with your IP
+            IPAddress localAddr = IPAddress.Any; // Listen on all interfaces
             int port = 6969;
 
             TcpListener server = new TcpListener(localAddr, port);
             server.Start();
-            Console.Write($"Chat Server listening on {localAddr}:{port}\r\n");
+            Console.WriteLine($"Chat Server listening on {localAddr}:{port}");
 
             while (true)
             {
-                TcpClient client = await server.AcceptTcpClientAsync();
-                Console.Write($"Client connected: {client.Client.RemoteEndPoint}\r\n");
-                _ = Task.Run(() => HandleClient(client));
+                try
+                {
+                    TcpClient client = await server.AcceptTcpClientAsync();
+                    Console.WriteLine($"Client connected: {client.Client.RemoteEndPoint}");
+
+                    // Handle client asynchronously with error logging
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await HandleClient(client);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Client handler error: {ex.Message}");
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error accepting client: {ex.Message}");
+                }
             }
         }
 
@@ -41,60 +60,72 @@ namespace Server
         {
             try
             {
-                NetworkStream stream = client.GetStream();
-                StreamReader reader = new StreamReader(stream);
-                StreamWriter writer = new StreamWriter(stream) { AutoFlush = true };
-
-                clients.TryAdd(client, writer);
-
-                string line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                using (NetworkStream stream = client.GetStream())
+                using (StreamReader reader = new StreamReader(stream))
                 {
-                    try
-                    {
-                        NetworkMessage msg = JsonSerializer.Deserialize<NetworkMessage>(line);
-                        if (msg == null) continue;
+                    StreamWriter writer = new StreamWriter(stream) { AutoFlush = true };
 
-                        switch (msg.MessageType)
+                    clients.TryAdd(client, writer);
+
+                    string line;
+                    while ((line = await reader.ReadLineAsync()) != null)
+                    {
+                        try
                         {
-                            case NetworkMessageType.Signup:
-                                await HandleSignUp(client, msg.GetPayload<User>());
-                                break;
+                            var msg = JsonSerializer.Deserialize<NetworkMessage>(line);
+                            if (msg == null) continue;
 
-                            case NetworkMessageType.Login:
-                                await HandleLogIn(client, msg.GetPayload<User>());
-                                break;
+                            switch (msg.MessageType)
+                            {
+                                case NetworkMessageType.Signup:
+                                    await HandleSignUp(client, msg.GetPayload<User>());
+                                    break;
 
-                            case NetworkMessageType.Logout:
-                                clients.TryRemove(client, out _);
-                                client.Close();
-                                Console.Write($"Client logged out: {client.Client.RemoteEndPoint}\r\n");
-                                return;
+                                case NetworkMessageType.Login:
+                                    await HandleLogIn(client, msg.GetPayload<User>());
+                                    break;
 
-                            // Placeholder for future features
-                            case NetworkMessageType.ChatMessage:
-                            case NetworkMessageType.ListChats:
-                            case NetworkMessageType.CreateChat:
-                            case NetworkMessageType.AddMember:
-                                Console.Write($"Unhandled message type: {msg.MessageType}\r\n");
-                                break;
+                                case NetworkMessageType.Logout:
+                                    await HandleLogout(client);
+                                    return;
+
+                                case NetworkMessageType.ChatMessage:
+                                case NetworkMessageType.ListChats:
+                                case NetworkMessageType.CreateChat:
+                                case NetworkMessageType.AddMember:
+                                    Console.WriteLine($"Unhandled message type: {msg.MessageType}");
+                                    break;
+
+                                default:
+                                    Console.WriteLine($"Unknown message type: {msg.MessageType}");
+                                    break;
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Write($"Error parsing message: {ex.Message}\r\n");
+                        catch (JsonException)
+                        {
+                            await SendError(client, "Invalid message format.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error processing message: {ex.Message}");
+                            await SendError(client, "Internal server error.");
+                        }
                     }
                 }
             }
+            catch (IOException)
+            {
+                Console.WriteLine($"Client disconnected abruptly: {client.Client.RemoteEndPoint}");
+            }
             catch (Exception ex)
             {
-                Console.Write($"Error with {client.Client.RemoteEndPoint}: {ex.Message}\r\n");
+                Console.WriteLine($"Error with client {client.Client.RemoteEndPoint}: {ex.Message}");
             }
             finally
             {
                 clients.TryRemove(client, out _);
                 client.Close();
-                Console.Write($"Client disconnected: {client.Client.RemoteEndPoint}\r\n");
+                Console.WriteLine($"Client disconnected: {client.Client.RemoteEndPoint}");
             }
         }
 
@@ -103,23 +134,20 @@ namespace Server
             var existing = database.GetUserByName(user.Name);
             if (existing != null)
             {
-                await SendResponse(client, new NetworkMessage
-                {
-                    MessageType = NetworkMessageType.Error,
-                    Payload = JsonSerializer.Serialize("User already exists!")
-                });
+                await SendError(client, "User already exists!");
                 return;
             }
 
             user.HashedPassword = Security.HashPassword(user.HashedPassword);
             await database.InsertUser(user);
+
             await SendResponse(client, new NetworkMessage
             {
                 MessageType = NetworkMessageType.Signup,
                 Payload = JsonSerializer.Serialize("Signup successful")
             });
 
-            Console.Write($"User signed up: {user.Name}\r\n");
+            Console.WriteLine($"User signed up: {user.Name}");
         }
 
         private static async Task HandleLogIn(TcpClient client, User user)
@@ -127,22 +155,14 @@ namespace Server
             var storedUser = database.GetUserByName(user.Name);
             if (storedUser == null)
             {
-                await SendResponse(client, new NetworkMessage
-                {
-                    MessageType = NetworkMessageType.Error,
-                    Payload = JsonSerializer.Serialize("User not found")
-                });
+                await SendError(client, "User not found");
                 return;
             }
 
             bool valid = Security.VerifyPassword(user.HashedPassword, storedUser.HashedPassword);
             if (!valid)
             {
-                await SendResponse(client, new NetworkMessage
-                {
-                    MessageType = NetworkMessageType.Error,
-                    Payload = JsonSerializer.Serialize("Invalid password")
-                });
+                await SendError(client, "Invalid password");
                 return;
             }
 
@@ -152,26 +172,34 @@ namespace Server
                 Payload = JsonSerializer.Serialize(storedUser)
             });
 
-            Console.Write($"User logged in: {user.Name}\r\n");
+            Console.WriteLine($"User logged in: {user.Name}");
+        }
+
+        private static async Task HandleLogout(TcpClient client)
+        {
+            clients.TryRemove(client, out _);
+            client.Close();
+            Console.WriteLine($"Client logged out: {client.Client.RemoteEndPoint}");
         }
 
         private static async Task BroadcastMessage(NetworkMessage msg)
         {
             string serialized = JsonSerializer.Serialize(msg);
 
-            foreach (var clientWriter in clients.Values)
+            foreach (var kvp in clients)
             {
                 try
                 {
-                    await clientWriter.WriteLineAsync(serialized);
+                    await kvp.Value.WriteLineAsync(serialized);
                 }
                 catch
                 {
-                    /* Ignore */
+                    clients.TryRemove(kvp.Key, out _);
+                    kvp.Key.Close();
                 }
             }
 
-            Console.Write("Broadcasted message to all clients\r\n");
+            Console.WriteLine("Broadcasted message to all clients");
         }
 
         private static async Task SendResponse(TcpClient client, NetworkMessage msg)
@@ -179,8 +207,25 @@ namespace Server
             if (clients.TryGetValue(client, out StreamWriter writer))
             {
                 string json = JsonSerializer.Serialize(msg);
-                await writer.WriteLineAsync(json);
+                try
+                {
+                    await writer.WriteLineAsync(json);
+                }
+                catch (IOException)
+                {
+                    clients.TryRemove(client, out _);
+                    client.Close();
+                }
             }
+        }
+
+        private static async Task SendError(TcpClient client, string error)
+        {
+            await SendResponse(client, new NetworkMessage
+            {
+                MessageType = NetworkMessageType.Error,
+                Payload = JsonSerializer.Serialize(error)
+            });
         }
     }
 }

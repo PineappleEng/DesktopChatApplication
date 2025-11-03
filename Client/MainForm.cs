@@ -1,20 +1,27 @@
 ﻿using System;
 using System.Windows.Forms;
-
-using Common.Models;
-using Common.Network;
-using Client.Forms;
-using Client.Network;
 using System.Text.Json;
 using System.Net.Sockets;
 using System.IO;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
+using Common.Models;
+using Common.Network;
+using Client.Forms;
 
 namespace Client
 {
     public partial class MainForm : Form
     {
+        private Form _activeForm;
+        private LogInForm _logInForm;
+        private SignUpForm _signUpForm;
+        private ChatForm _chatForm;
+
+        private TcpClient _client;
+        private StreamWriter _writer;
+        private StreamReader _reader;
+        private bool _listening = false;
+
         public MainForm()
         {
             InitializeComponent();
@@ -26,11 +33,7 @@ namespace Client
             ShowLogInForm();
         }
 
-        #region Form Switch Logic
-        private Form _activeForm;
-        private LogInForm _logInForm;
-        private SignUpForm _signUpForm;
-        private ChatForm _chatForm;
+        #region Form Switching Logic
 
         private void LoadForm(Form f)
         {
@@ -41,13 +44,14 @@ namespace Client
                 ContentPanel.Controls.Remove(_activeForm);
                 _activeForm.Dispose();
             }
+
             _activeForm = f;
             _activeForm.TopLevel = false;
             _activeForm.FormBorderStyle = FormBorderStyle.None;
             _activeForm.Dock = DockStyle.Fill;
             ContentPanel.Controls.Add(_activeForm);
             _activeForm.Show();
-            
+
             ResumeLayout();
         }
 
@@ -77,15 +81,18 @@ namespace Client
         {
             if (_chatForm == null || _chatForm.IsDisposed)
                 _chatForm = new ChatForm();
+
             _chatForm.CurrentUser = user;
             LoadForm(_chatForm);
         }
+
         #endregion
 
         #region Application Flow Logic
+
         private async void OnSignUpButtonClicked(User user)
         {
-            await SendMessage(new NetworkMessage
+            await SendMessageAsync(new NetworkMessage
             {
                 MessageType = NetworkMessageType.Signup,
                 Payload = JsonSerializer.Serialize(user)
@@ -99,7 +106,7 @@ namespace Client
 
         private async void OnLogInButtonClicked(User user)
         {
-            await SendMessage(new NetworkMessage
+            await SendMessageAsync(new NetworkMessage
             {
                 MessageType = NetworkMessageType.Login,
                 Payload = JsonSerializer.Serialize(user)
@@ -110,41 +117,93 @@ namespace Client
         {
             ShowSignUpForm();
         }
+
         #endregion
 
-        #region Tcp Client Logic
-        private TcpClient _client;
-        private StreamWriter _writer;
-        private StreamReader _reader;
+        #region TCP Client Logic
 
         private async void MainForm_Load(object sender, EventArgs e)
         {
-            string serverIp = "10.0.2.15";
-            int port = 6969;
+            try
+            {
+                await ConnectToServerAsync("10.0.2.15", 6969);
+                _ = Task.Run(ListenAsync);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to connect to server:\n{ex.Message}",
+                    "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task ConnectToServerAsync(string ip, int port)
+        {
             _client = new TcpClient();
-            await _client.ConnectAsync(serverIp, port);
+            await _client.ConnectAsync(ip, port);
 
             var stream = _client.GetStream();
             _writer = new StreamWriter(stream) { AutoFlush = true };
             _reader = new StreamReader(stream);
-
-            _ = Task.Run(Listen);
+            _listening = true;
         }
 
-        private async Task Listen()
+        private async Task ListenAsync()
         {
-            string line;
-            while ((line = await _reader.ReadLineAsync()) != null)
+            try
             {
-                var msg = JsonSerializer.Deserialize<NetworkMessage>(line);
-                HandleMessage(msg);
+                string line;
+                while (_listening && (line = await _reader.ReadLineAsync()) != null)
+                {
+                    var msg = JsonSerializer.Deserialize<NetworkMessage>(line);
+                    if (msg != null)
+                        HandleMessageSafe(msg);
+                }
+            }
+            catch (IOException)
+            {
+                HandleMessageSafe(new NetworkMessage
+                {
+                    MessageType = NetworkMessageType.Error,
+                    Payload = JsonSerializer.Serialize("Lost connection to server.")
+                });
+            }
+            catch (Exception ex)
+            {
+                HandleMessageSafe(new NetworkMessage
+                {
+                    MessageType = NetworkMessageType.Error,
+                    Payload = JsonSerializer.Serialize($"Listener error: {ex.Message}")
+                });
             }
         }
 
-        private async Task SendMessage(NetworkMessage msg)
+        private async Task SendMessageAsync(NetworkMessage msg)
         {
-            string json = JsonSerializer.Serialize(msg);
-            await _writer.WriteLineAsync(json);
+            try
+            {
+                if (_writer == null)
+                {
+                    MessageBox.Show("Not connected to the server.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string json = JsonSerializer.Serialize(msg);
+                await _writer.WriteLineAsync(json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to send message:\n{ex.Message}",
+                    "Network Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void HandleMessageSafe(NetworkMessage msg)
+        {
+            if (InvokeRequired)
+                BeginInvoke(new Action(() => HandleMessage(msg)));
+            else
+                HandleMessage(msg);
         }
 
         private void HandleMessage(NetworkMessage msg)
@@ -152,34 +211,44 @@ namespace Client
             switch (msg.MessageType)
             {
                 case NetworkMessageType.Error:
-                    string errorMsg = msg.GetPayload<string>();
-                    MessageBox.Show(
-                        errorMsg, 
-                        "Error", 
-                        MessageBoxButtons.OK, 
-                        MessageBoxIcon.Error);
+                    MessageBox.Show(msg.GetPayload<string>(),
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     break;
+
                 case NetworkMessageType.Signup:
-                    MessageBox.Show(
-                        "Signed up successfuly",
-                        "Signup",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
+                    MessageBox.Show("Signed up successfully!",
+                        "Signup", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     ShowLogInForm();
                     break;
+
                 case NetworkMessageType.Login:
-                    ShowChatForm(msg.GetPayload<User>());
+                    var user = msg.GetPayload<User>();
+                    ShowChatForm(user);
                     break;
-                //case NetworkMessageType.Login:
-                //    break;
-                //case NetworkMessageType.Login:
-                //    break;
-                //case NetworkMessageType.Login:
-                //    break;
-                //case NetworkMessageType.Login:
-                //    break;
+
+                default:
+                    MessageBox.Show(
+                        $"Unhandled message type: {msg.MessageType}",
+                        "Debug", 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Information);
+                    break;
             }
         }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _listening = false;
+
+            try
+            {
+                _reader?.Dispose();
+                _writer?.Dispose();
+                _client?.Close();
+            }
+            catch { /* ignore */ }
+        }
+
         #endregion
     }
 }

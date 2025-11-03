@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server
 {
@@ -27,7 +24,7 @@ namespace Server
             return $"{Convert.ToBase64String(salt)}:{Convert.ToBase64String(hash)}";
         }
 
-        private static bool ComparePassword(string entered, string stored)
+        public static bool VerifyPassword(string password, string stored)
         {
             try
             {
@@ -38,7 +35,7 @@ namespace Server
                 byte[] salt = Convert.FromBase64String(parts[0]);
                 byte[] storedHash = Convert.FromBase64String(parts[1]);
 
-                var pbkdf2 = new Rfc2898DeriveBytes(entered, salt, 100_000, HashAlgorithmName.SHA256);
+                var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 100_000, HashAlgorithmName.SHA256);
                 byte[] computedHash = pbkdf2.GetBytes(32);
 
                 return storedHash.SequenceEqual(computedHash);
@@ -47,11 +44,6 @@ namespace Server
             {
                 return false;
             }
-        }
-
-        public static bool VerifyPassword(string entered, string stored)
-        {
-            return ComparePassword(HashPassword(entered), stored);
         }
     }
 }
