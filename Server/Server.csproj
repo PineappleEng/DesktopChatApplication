@@ -57,7 +57,7 @@
     <Compile Include="Database\ChatDatabase.Messages.cs" />
     <Compile Include="Database\ChatDatabase.UserChats.cs" />
     <Compile Include="Database\ChatDatabase.Users.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="ChatServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
