@@ -43,7 +43,12 @@ namespace Server
                 {
                     StreamWriter writer = new StreamWriter(stream) { AutoFlush = true };
                     clients.TryAdd(client, writer);
-                    // I'll write this later cause I'm lazy
+                    
+                    string line;
+                    while ((line = await reader.ReadLineAsync()) != null)
+                    {
+                        // I'll write this later cause I'm lazy
+                    }
                 }
             }
             catch(Exception ex)
