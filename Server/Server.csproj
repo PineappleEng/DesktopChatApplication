@@ -90,6 +90,7 @@
     <Compile Include="Database\ChatDatabase.Users.cs" />
     <Compile Include="ChatServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Security.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
