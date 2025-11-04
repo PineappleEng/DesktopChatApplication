@@ -32,20 +32,20 @@
             this.LeftPanel = new System.Windows.Forms.Panel();
             this.ChatList = new System.Windows.Forms.FlowLayoutPanel();
             this.UserPanel = new System.Windows.Forms.Panel();
+            this.LogOut = new Client.Controls.RoundedButton();
+            this.CreateChat = new Client.Controls.RoundedButton();
+            this.UserPicture = new Client.Controls.RoundedPicture();
             this.FillPanel = new System.Windows.Forms.Panel();
             this.RightPanel = new System.Windows.Forms.Panel();
             this.MessageList = new System.Windows.Forms.FlowLayoutPanel();
             this.ChatInput = new System.Windows.Forms.Panel();
+            this.MessageInput = new System.Windows.Forms.RichTextBox();
+            this.SendMessage = new System.Windows.Forms.Button();
+            this.EmojiMenu = new System.Windows.Forms.Button();
             this.ChatDetails = new System.Windows.Forms.Panel();
             this.ChatName = new System.Windows.Forms.Label();
-            this.AddMember = new Client.Controls.RoundedButton();
             this.ChatPicture = new Client.Controls.RoundedPicture();
-            this.LogOut = new Client.Controls.RoundedButton();
-            this.UserPicture = new Client.Controls.RoundedPicture();
-            this.CreateChat = new Client.Controls.RoundedButton();
-            this.EmojiMenu = new System.Windows.Forms.Button();
-            this.SendMessage = new System.Windows.Forms.Button();
-            this.MessageInput = new System.Windows.Forms.RichTextBox();
+            this.AddMember = new Client.Controls.RoundedButton();
             this.LeftPanel.SuspendLayout();
             this.UserPanel.SuspendLayout();
             this.RightPanel.SuspendLayout();
@@ -76,14 +76,55 @@
             // UserPanel
             // 
             this.UserPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(106)))), ((int)(((byte)(162)))), ((int)(((byte)(190)))));
-            this.UserPanel.Controls.Add(this.CreateChat);
             this.UserPanel.Controls.Add(this.LogOut);
+            this.UserPanel.Controls.Add(this.CreateChat);
             this.UserPanel.Controls.Add(this.UserPicture);
             this.UserPanel.Dock = System.Windows.Forms.DockStyle.Left;
             this.UserPanel.Location = new System.Drawing.Point(0, 65);
             this.UserPanel.Name = "UserPanel";
             this.UserPanel.Size = new System.Drawing.Size(48, 496);
             this.UserPanel.TabIndex = 1;
+            // 
+            // LogOut
+            // 
+            this.LogOut.AutoSize = true;
+            this.LogOut.BackColor = System.Drawing.Color.Transparent;
+            this.LogOut.BackgroundColor = System.Drawing.SystemColors.Control;
+            this.LogOut.BorderColor = System.Drawing.SystemColors.Control;
+            this.LogOut.BorderWidth = 1F;
+            this.LogOut.Image = global::Client.Properties.Resources.logout;
+            this.LogOut.Location = new System.Drawing.Point(0, 395);
+            this.LogOut.Name = "LogOut";
+            this.LogOut.Radius = 10F;
+            this.LogOut.Size = new System.Drawing.Size(48, 48);
+            this.LogOut.TabIndex = 1;
+            // 
+            // CreateChat
+            // 
+            this.CreateChat.AutoSize = true;
+            this.CreateChat.BackColor = System.Drawing.Color.Transparent;
+            this.CreateChat.BackgroundColor = System.Drawing.SystemColors.Control;
+            this.CreateChat.BorderColor = System.Drawing.SystemColors.Control;
+            this.CreateChat.BorderWidth = 1F;
+            this.CreateChat.Image = global::Client.Properties.Resources.create_chat;
+            this.CreateChat.Location = new System.Drawing.Point(0, 0);
+            this.CreateChat.Name = "CreateChat";
+            this.CreateChat.Radius = 10F;
+            this.CreateChat.Size = new System.Drawing.Size(48, 48);
+            this.CreateChat.TabIndex = 2;
+            // 
+            // UserPicture
+            // 
+            this.UserPicture.BackgroundColor = System.Drawing.SystemColors.Control;
+            this.UserPicture.BorderColor = System.Drawing.SystemColors.Control;
+            this.UserPicture.BorderWidth = 1F;
+            this.UserPicture.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.UserPicture.Image = global::Client.Properties.Resources.user;
+            this.UserPicture.Location = new System.Drawing.Point(0, 448);
+            this.UserPicture.Name = "UserPicture";
+            this.UserPicture.Radius = 24F;
+            this.UserPicture.Size = new System.Drawing.Size(48, 48);
+            this.UserPicture.TabIndex = 0;
             // 
             // FillPanel
             // 
@@ -126,12 +167,45 @@
             this.ChatInput.Size = new System.Drawing.Size(619, 45);
             this.ChatInput.TabIndex = 1;
             // 
+            // MessageInput
+            // 
+            this.MessageInput.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.MessageInput.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.MessageInput.Font = new System.Drawing.Font("Segoe UI Emoji", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.MessageInput.Location = new System.Drawing.Point(75, 0);
+            this.MessageInput.Multiline = false;
+            this.MessageInput.Name = "MessageInput";
+            this.MessageInput.Size = new System.Drawing.Size(469, 45);
+            this.MessageInput.TabIndex = 2;
+            this.MessageInput.Text = "";
+            this.MessageInput.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MessageInput_KeyDown);
+            // 
+            // SendMessage
+            // 
+            this.SendMessage.Dock = System.Windows.Forms.DockStyle.Right;
+            this.SendMessage.Location = new System.Drawing.Point(544, 0);
+            this.SendMessage.Name = "SendMessage";
+            this.SendMessage.Size = new System.Drawing.Size(75, 45);
+            this.SendMessage.TabIndex = 1;
+            this.SendMessage.UseVisualStyleBackColor = true;
+            this.SendMessage.Click += new System.EventHandler(this.SendMessage_Click);
+            // 
+            // EmojiMenu
+            // 
+            this.EmojiMenu.Dock = System.Windows.Forms.DockStyle.Left;
+            this.EmojiMenu.Location = new System.Drawing.Point(0, 0);
+            this.EmojiMenu.Name = "EmojiMenu";
+            this.EmojiMenu.Size = new System.Drawing.Size(75, 45);
+            this.EmojiMenu.TabIndex = 0;
+            this.EmojiMenu.UseVisualStyleBackColor = true;
+            this.EmojiMenu.Click += new System.EventHandler(this.EmojiMenu_Click);
+            // 
             // ChatDetails
             // 
             this.ChatDetails.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(158)))), ((int)(((byte)(188)))));
-            this.ChatDetails.Controls.Add(this.AddMember);
             this.ChatDetails.Controls.Add(this.ChatName);
             this.ChatDetails.Controls.Add(this.ChatPicture);
+            this.ChatDetails.Controls.Add(this.AddMember);
             this.ChatDetails.Dock = System.Windows.Forms.DockStyle.Top;
             this.ChatDetails.Location = new System.Drawing.Point(0, 0);
             this.ChatDetails.Name = "ChatDetails";
@@ -148,6 +222,19 @@
             this.ChatName.TabIndex = 1;
             this.ChatName.Text = "Chat Name";
             // 
+            // ChatPicture
+            // 
+            this.ChatPicture.BackgroundColor = System.Drawing.SystemColors.Control;
+            this.ChatPicture.BorderColor = System.Drawing.SystemColors.Control;
+            this.ChatPicture.BorderWidth = 1F;
+            this.ChatPicture.Dock = System.Windows.Forms.DockStyle.Left;
+            this.ChatPicture.Image = global::Client.Properties.Resources.monday_emoji;
+            this.ChatPicture.Location = new System.Drawing.Point(0, 0);
+            this.ChatPicture.Name = "ChatPicture";
+            this.ChatPicture.Radius = 32.5F;
+            this.ChatPicture.Size = new System.Drawing.Size(65, 65);
+            this.ChatPicture.TabIndex = 0;
+            // 
             // AddMember
             // 
             this.AddMember.AutoSize = true;
@@ -162,94 +249,11 @@
             this.AddMember.Size = new System.Drawing.Size(55, 55);
             this.AddMember.TabIndex = 2;
             // 
-            // ChatPicture
-            // 
-            this.ChatPicture.BackgroundColor = System.Drawing.SystemColors.Control;
-            this.ChatPicture.BorderColor = System.Drawing.SystemColors.Control;
-            this.ChatPicture.BorderWidth = 1F;
-            this.ChatPicture.Dock = System.Windows.Forms.DockStyle.Left;
-            this.ChatPicture.Image = global::Client.Properties.Resources.monday_emoji;
-            this.ChatPicture.Location = new System.Drawing.Point(0, 0);
-            this.ChatPicture.Name = "ChatPicture";
-            this.ChatPicture.Radius = 32.5F;
-            this.ChatPicture.Size = new System.Drawing.Size(65, 65);
-            this.ChatPicture.TabIndex = 0;
-            // 
-            // LogOut
-            // 
-            this.LogOut.AutoSize = true;
-            this.LogOut.BackColor = System.Drawing.Color.Transparent;
-            this.LogOut.BackgroundColor = System.Drawing.SystemColors.Control;
-            this.LogOut.BorderColor = System.Drawing.SystemColors.Control;
-            this.LogOut.BorderWidth = 1F;
-            this.LogOut.Image = global::Client.Properties.Resources.logout;
-            this.LogOut.Location = new System.Drawing.Point(0, 395);
-            this.LogOut.Name = "LogOut";
-            this.LogOut.Radius = 10F;
-            this.LogOut.Size = new System.Drawing.Size(48, 48);
-            this.LogOut.TabIndex = 1;
-            // 
-            // UserPicture
-            // 
-            this.UserPicture.BackgroundColor = System.Drawing.SystemColors.Control;
-            this.UserPicture.BorderColor = System.Drawing.SystemColors.Control;
-            this.UserPicture.BorderWidth = 1F;
-            this.UserPicture.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.UserPicture.Image = global::Client.Properties.Resources.user;
-            this.UserPicture.Location = new System.Drawing.Point(0, 448);
-            this.UserPicture.Name = "UserPicture";
-            this.UserPicture.Radius = 24F;
-            this.UserPicture.Size = new System.Drawing.Size(48, 48);
-            this.UserPicture.TabIndex = 0;
-            // 
-            // CreateChat
-            // 
-            this.CreateChat.AutoSize = true;
-            this.CreateChat.BackColor = System.Drawing.Color.Transparent;
-            this.CreateChat.BackgroundColor = System.Drawing.SystemColors.Control;
-            this.CreateChat.BorderColor = System.Drawing.SystemColors.Control;
-            this.CreateChat.BorderWidth = 1F;
-            this.CreateChat.Image = global::Client.Properties.Resources.create_chat;
-            this.CreateChat.Location = new System.Drawing.Point(0, 0);
-            this.CreateChat.Name = "CreateChat";
-            this.CreateChat.Radius = 10F;
-            this.CreateChat.Size = new System.Drawing.Size(48, 48);
-            this.CreateChat.TabIndex = 2;
-            // 
-            // EmojiMenu
-            // 
-            this.EmojiMenu.Dock = System.Windows.Forms.DockStyle.Left;
-            this.EmojiMenu.Location = new System.Drawing.Point(0, 0);
-            this.EmojiMenu.Name = "EmojiMenu";
-            this.EmojiMenu.Size = new System.Drawing.Size(75, 45);
-            this.EmojiMenu.TabIndex = 0;
-            this.EmojiMenu.UseVisualStyleBackColor = true;
-            // 
-            // SendMessage
-            // 
-            this.SendMessage.Dock = System.Windows.Forms.DockStyle.Right;
-            this.SendMessage.Location = new System.Drawing.Point(544, 0);
-            this.SendMessage.Name = "SendMessage";
-            this.SendMessage.Size = new System.Drawing.Size(75, 45);
-            this.SendMessage.TabIndex = 1;
-            this.SendMessage.UseVisualStyleBackColor = true;
-            // 
-            // MessageInput
-            // 
-            this.MessageInput.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.MessageInput.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.MessageInput.Font = new System.Drawing.Font("Segoe UI Emoji", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.MessageInput.Location = new System.Drawing.Point(75, 0);
-            this.MessageInput.Multiline = false;
-            this.MessageInput.Name = "MessageInput";
-            this.MessageInput.Size = new System.Drawing.Size(469, 45);
-            this.MessageInput.TabIndex = 2;
-            this.MessageInput.Text = "";
-            // 
             // ChatForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(146)))), ((int)(((byte)(202)))), ((int)(((byte)(230)))));
             this.ClientSize = new System.Drawing.Size(884, 561);
             this.Controls.Add(this.RightPanel);
             this.Controls.Add(this.LeftPanel);

@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Server.Database
@@ -12,45 +10,68 @@ namespace Server.Database
     {
         public async Task InsertChat(Chat chat)
         {
+            // Insert the chat and return last_insert_rowid()
             const string query = @"
                 INSERT INTO Chats (Name, AdminId) 
-                VALUES (@Name, @AdminId);";
+                VALUES (@Name, @AdminId);
+                SELECT last_insert_rowid();";
+
             using (var cmd = new SQLiteCommand(query, _connection))
             {
-                cmd.Parameters.AddWithValue("@Name", chat.Name);
+                cmd.Parameters.AddWithValue("@Name", chat.Name ?? string.Empty);
                 cmd.Parameters.AddWithValue("@AdminId", chat.AdminId);
-                await cmd.ExecuteNonQueryAsync();
+
+                var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+
+                // ExecuteScalar for last_insert_rowid returns a long
+                if (result is long id)
+                {
+                    chat.Id = Convert.ToInt32(id);
+                }
+                else if (result != null)
+                {
+                    chat.Id = Convert.ToInt32(result);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Failed to retrieve inserted chat id.");
+                }
             }
         }
 
         public List<Chat> GetUserChats(int userId)
         {
             const string query = @"
-                SELECT Id, Name, AdminId
-                FROM Chats
-                JOIN UserChats
-                ON Chats.Id = UserChats.ChatId
-                AND UserChats.UserId = @UserId;";
-            List<Chat> chats = new List<Chat>();
+                SELECT c.Id, c.Name, c.AdminId
+                FROM Chats c
+                INNER JOIN UserChats uc ON c.Id = uc.ChatId
+                WHERE uc.UserId = @UserId;";
+
+            var chats = new List<Chat>();
             using (var cmd = new SQLiteCommand(query, _connection))
             {
                 cmd.Parameters.AddWithValue("@UserId", userId);
                 using (var reader = cmd.ExecuteReader())
                 {
-                    chats.Add(new Chat
+                    while (reader.Read())
                     {
-                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                        Name = reader.GetString(reader.GetOrdinal("Name")),
-                        AdminId = reader.GetInt32(reader.GetOrdinal("AdminId"))
-                    });
+                        chats.Add(new Chat
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            AdminId = reader.GetInt32(reader.GetOrdinal("AdminId"))
+                        });
+                    }
                 }
             }
+
             return chats;
         }
 
         public Chat GetChatById(int chatId)
         {
-            const string query = "SELECT * FROM Chats WHERE ChatId = @ChatId;";
+            // Use the actual column name (Id) in the WHERE clause
+            const string query = "SELECT Id, Name, AdminId FROM Chats WHERE Id = @ChatId;";
             using (var cmd = new SQLiteCommand(query, _connection))
             {
                 cmd.Parameters.AddWithValue("@ChatId", chatId);

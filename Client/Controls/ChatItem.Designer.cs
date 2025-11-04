@@ -35,10 +35,10 @@
             // ChatName
             // 
             this.ChatName.AutoSize = true;
-            this.ChatName.Font = new System.Drawing.Font("Segoe UI Emoji", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ChatName.Location = new System.Drawing.Point(58, 10);
+            this.ChatName.Font = new System.Drawing.Font("Segoe UI Emoji", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ChatName.Location = new System.Drawing.Point(58, 12);
             this.ChatName.Name = "ChatName";
-            this.ChatName.Size = new System.Drawing.Size(121, 30);
+            this.ChatName.Size = new System.Drawing.Size(106, 26);
             this.ChatName.TabIndex = 1;
             this.ChatName.Text = "Chat Name";
             this.ChatName.Click += new System.EventHandler(this.ChatName_Click);
@@ -53,7 +53,6 @@
             this.ChatPicture.Location = new System.Drawing.Point(0, 0);
             this.ChatPicture.Margin = new System.Windows.Forms.Padding(5);
             this.ChatPicture.Name = "ChatPicture";
-            this.ChatPicture.Padding = new System.Windows.Forms.Padding(5);
             this.ChatPicture.Radius = 25F;
             this.ChatPicture.Size = new System.Drawing.Size(50, 50);
             this.ChatPicture.TabIndex = 0;
@@ -63,6 +62,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(170)))), ((int)(((byte)(200)))));
             this.Controls.Add(this.ChatName);
             this.Controls.Add(this.ChatPicture);
             this.Name = "ChatItem";

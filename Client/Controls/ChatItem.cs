@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -24,22 +25,23 @@ namespace Client.Controls
             }
         }
 
-        private string _text;
-        public override string Text
+        private Chat _chat;
+        public Chat Chat
         {
-            get { return _text; }
-            set
-            {
-                _text = value;
-                ChatName.Text = _text;
+            get { return _chat; }
+            set 
+            { 
+                _chat = value; 
+                ChatName.Text = _chat.Name;
             }
         }
 
         public event EventHandler ChatItemClicked;
 
-        public ChatItem()
+        public ChatItem(Chat chat)
         {
             InitializeComponent();
+            Chat = chat;
             ChatPicture.PictureClicked += ChatItemClicked;
         }
 
