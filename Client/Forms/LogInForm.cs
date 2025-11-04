@@ -7,7 +7,7 @@ namespace Client.Forms
 {
     public partial class LogInForm : Form
     {
-        public event Action<string, string> LogInButtonClicked;
+        public event Action<User> LogInButtonClicked;
         public event EventHandler SignUpInsteadClicked;
 
         public LogInForm()
@@ -29,10 +29,11 @@ namespace Client.Forms
 
         private void LogInButton_Click(object sender, EventArgs e)
         {
-            LogInButtonClicked?.Invoke(
-                UsernameField.Text, 
-                PasswordField.Text
-            );
+            LogInButtonClicked?.Invoke(new User
+            {
+                Name = UsernameField.Text.Trim(),
+                HashedPassword = PasswordField.Text.Trim()
+            });
         }
 
         private void SignUpInstead_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

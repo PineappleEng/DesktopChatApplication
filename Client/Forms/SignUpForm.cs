@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,7 +13,7 @@ namespace Client.Forms
 {
     public partial class SignUpForm : Form
     {
-        public event EventHandler SignUpButtonClicked;
+        public event Action<User> SignUpButtonClicked;
         public event EventHandler LogInInsteadClicked;
 
         public SignUpForm()
@@ -34,7 +35,11 @@ namespace Client.Forms
 
         private void SignUpButton_Click(object sender, EventArgs e)
         {
-            SignUpButtonClicked?.Invoke(this, EventArgs.Empty);
+            SignUpButtonClicked?.Invoke(new User
+            {
+                Name = UsernameField.Text.Trim(),
+                HashedPassword = PasswordField.Text.Trim()
+            });
         }
 
         private void LogInInstead_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

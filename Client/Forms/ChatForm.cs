@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,6 +13,13 @@ namespace Client.Forms
 {
     public partial class ChatForm : Form
     {
+        private User _currentUser;
+        public User CurrentUser
+        {
+            get { return _currentUser; }
+            set { _currentUser = value; }
+        }
+
         public ChatForm()
         {
             InitializeComponent();
