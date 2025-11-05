@@ -8,13 +8,14 @@ namespace Common.Network
 {
     public enum NetworkMessageType
     {
-        Login,
-        Signup,
+        Login, 
+        Signup, 
         Logout,
 
-        ChatMessage,
+        ChatMessage, //TODO
         CreateChat,
-        AddMember,
+        AddMember, //TODO
+        ListUsers, 
         ListChats,
 
         Error

@@ -1,12 +1,14 @@
-﻿using System;
-using System.Windows.Forms;
-using System.Text.Json;
-using System.Net.Sockets;
-using System.IO;
-using System.Threading.Tasks;
+﻿using Client.Forms;
 using Common.Models;
 using Common.Network;
-using Client.Forms;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Net.Sockets;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Client
 {
@@ -21,6 +23,7 @@ namespace Client
         private StreamWriter _writer;
         private StreamReader _reader;
         private bool _listening = false;
+        private bool _loggedIn = false;
 
         public MainForm()
         {
@@ -80,7 +83,12 @@ namespace Client
         public void ShowChatForm(User user)
         {
             if (_chatForm == null || _chatForm.IsDisposed)
+            {
                 _chatForm = new ChatForm();
+                _chatForm.LogOutButtonClicked += OnLogOutButtonClicked;
+                _chatForm.CreateChatButtonClicked += OnCreateChatButtonClicked;
+                _chatForm.RequestChats += OnRequestChats;
+            }
 
             _chatForm.CurrentUser = user;
             LoadForm(_chatForm);
@@ -116,6 +124,115 @@ namespace Client
         private void OnSignUpInsteadClicked(object sender, EventArgs e)
         {
             ShowSignUpForm();
+        }
+
+        private async void OnLogOutButtonClicked(object sender, EventArgs e)
+        {
+            await SendMessageAsync(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.Logout
+            });
+        }
+
+        private async void OnRequestChats(User user)
+        {
+            await SendMessageAsync(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.ListChats,
+                Payload = JsonSerializer.Serialize(user)
+            });
+        }
+
+        private async void OnCreateChatButtonClicked(object sender, EventArgs e)
+        {
+            await SendMessageAsync(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.ListUsers
+            });
+        }
+
+        private async Task CreateChat(List<User> users)
+        {
+            // Defensive: ensure there's a valid chat form and user context
+            if (_chatForm == null || _chatForm.CurrentUser == null)
+            {
+                MessageBox.Show("You must be logged in to create a chat.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            using (var dlg = new CreateChatPrompt())
+            {
+                // Populate the checklist with all users except the current one
+                foreach (var user in users)
+                {
+                    dlg.CheckedList.Items.Add(user, false);
+                }
+
+                // Show dialog and proceed only if user confirms
+                DialogResult result = dlg.ShowDialog(this);
+                if (result != DialogResult.OK)
+                    return;
+
+                string chatName = dlg.ChatNameTextbox.Text.Trim();
+
+                if (string.IsNullOrEmpty(chatName))
+                {
+                    MessageBox.Show(
+                        "Please enter a name for the chat.",
+                        "Validation",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Collect selected users (iterate correctly over CheckedItems)
+                var selectedUsers = new List<User>();
+                foreach (User selectedItem in dlg.CheckedList.CheckedItems)
+                {
+                    selectedUsers.Add(selectedItem);
+                }
+
+                // Ensure at least one user selected
+                if (selectedUsers.Count == 0)
+                {
+                    MessageBox.Show(
+                        "Select at least one user to create a chat.",
+                        "Validation",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Add the current user to the participant list
+                selectedUsers.Add(_chatForm.CurrentUser);
+
+                try
+                {
+                    // Create and send the chat creation request
+                    var newChat = new Chat
+                    {
+                        Name = chatName,
+                        AdminId = _chatForm.CurrentUser.Id
+                    };
+
+                    var payload = new List<object> { newChat, selectedUsers };
+
+                    await SendMessageAsync(new NetworkMessage
+                    {
+                        MessageType = NetworkMessageType.CreateChat,
+                        Payload = JsonSerializer.Serialize(payload)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"Failed to create chat:\n{ex.Message}",
+                        "Network Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
         }
 
         #endregion
@@ -222,9 +339,53 @@ namespace Client
                     break;
 
                 case NetworkMessageType.Login:
+                {
                     var user = msg.GetPayload<User>();
+                    _loggedIn = true;
                     ShowChatForm(user);
                     break;
+                }
+
+                case NetworkMessageType.Logout:
+                    _loggedIn = false;
+                    ShowLogInForm();
+                    break;
+
+                case NetworkMessageType.ListChats:
+                    _chatForm.UserChatList = msg.GetPayload<List<Chat>>();
+                    _chatForm.LoadChats();
+                    break;
+
+                case NetworkMessageType.ListUsers:
+                {
+                    var allUsers = msg.GetPayload<List<User>>();
+                    var users = new List<User>();
+                    foreach (var user in allUsers)
+                    {
+                        if (user.Id == _chatForm.CurrentUser.Id)
+                            continue;
+                        users.Add(user);
+                    }
+                    if (users.Count == 0)
+                    {
+                        MessageBox.Show(
+                            "There are no other users",
+                            "No Users",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                    else
+                        CreateChat(users);
+                    break;
+                }
+
+                case NetworkMessageType.CreateChat:
+                {
+                    var chat = msg.GetPayload<Chat>();
+                    _chatForm.CurrentChat = chat;
+                    _chatForm.UserChatList.Add(chat);
+                    break;
+                }
 
                 default:
                     MessageBox.Show(
@@ -238,6 +399,11 @@ namespace Client
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            Task.Run(() => SendMessageAsync(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.Logout,
+                Payload = null
+            }));
             _listening = false;
 
             try
