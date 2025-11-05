@@ -277,7 +277,6 @@
         private System.Windows.Forms.Panel FillPanel;
         private System.Windows.Forms.Panel ChatDetails;
         private System.Windows.Forms.Panel UserPanel;
-        private System.Windows.Forms.FlowLayoutPanel ChatList;
         private System.Windows.Forms.Panel ChatInput;
         private System.Windows.Forms.FlowLayoutPanel MessageList;
         private Controls.RoundedPicture UserPicture;
@@ -289,5 +288,6 @@
         private System.Windows.Forms.RichTextBox MessageInput;
         private System.Windows.Forms.Button SendMessage;
         private System.Windows.Forms.Button EmojiMenu;
+        public System.Windows.Forms.FlowLayoutPanel ChatList;
     }
 }

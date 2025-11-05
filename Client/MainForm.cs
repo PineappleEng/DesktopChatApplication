@@ -100,6 +100,10 @@ namespace Client
 
         private async void OnSignUpButtonClicked(User user)
         {
+            if (_client == null || !_client.Connected)
+            {
+                await ConnectToServer();
+            }
             await SendMessageAsync(new NetworkMessage
             {
                 MessageType = NetworkMessageType.Signup,
@@ -114,6 +118,10 @@ namespace Client
 
         private async void OnLogInButtonClicked(User user)
         {
+            if (_client == null || !_client.Connected)
+            {
+                await ConnectToServer();
+            }
             await SendMessageAsync(new NetworkMessage
             {
                 MessageType = NetworkMessageType.Login,
@@ -132,6 +140,7 @@ namespace Client
             {
                 MessageType = NetworkMessageType.Logout
             });
+            _client = null;
         }
 
         private async void OnRequestChats(User user)
@@ -151,7 +160,7 @@ namespace Client
             });
         }
 
-        private async Task CreateChat(List<User> users)
+        private void CreateChat(List<User> users)
         {
             // Defensive: ensure there's a valid chat form and user context
             if (_chatForm == null || _chatForm.CurrentUser == null)
@@ -218,11 +227,11 @@ namespace Client
 
                     var payload = new List<object> { newChat, selectedUsers };
 
-                    await SendMessageAsync(new NetworkMessage
+                    Task.Run(() => SendMessageAsync(new NetworkMessage
                     {
                         MessageType = NetworkMessageType.CreateChat,
                         Payload = JsonSerializer.Serialize(payload)
-                    });
+                    }));
                 }
                 catch (Exception ex)
                 {
@@ -239,7 +248,7 @@ namespace Client
 
         #region TCP Client Logic
 
-        private async void MainForm_Load(object sender, EventArgs e)
+        private async Task ConnectToServer()
         {
             try
             {
@@ -384,6 +393,7 @@ namespace Client
                     var chat = msg.GetPayload<Chat>();
                     _chatForm.CurrentChat = chat;
                     _chatForm.UserChatList.Add(chat);
+                    _chatForm.LoadChats();
                     break;
                 }
 

@@ -4,7 +4,6 @@ using Common.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Client.Forms
@@ -70,6 +69,17 @@ namespace Client.Forms
             ChatInput.Enabled = hasChat;
         }
 
+        private ChatItem CreateChatItem(Chat chat)
+        {
+            var chatItem = new ChatItem(chat)
+            {
+                Image = Resources.monday_emoji,
+                Cursor = Cursors.Hand
+            };
+            chatItem.ChatItemClicked += OnChatItemClicked;
+            return chatItem;
+        }
+
         public void LoadChats()
         {
             ChatList.SuspendLayout(); // prevents flicker during control addition
@@ -77,12 +87,7 @@ namespace Client.Forms
 
             foreach (Chat chat in UserChatList)
             {
-                var chatItem = new ChatItem(chat)
-                {
-                    Image = Resources.monday_emoji,
-                    Cursor = Cursors.Hand
-                };
-                chatItem.ChatItemClicked += OnChatItemClicked;
+                var chatItem = CreateChatItem(chat);
                 ChatList.Controls.Add(chatItem);
             }
 
@@ -90,7 +95,7 @@ namespace Client.Forms
         }
 
         // async retained for future async loading logic
-        private async void OnChatItemClicked(object sender, EventArgs e)
+        private void OnChatItemClicked(object sender, EventArgs e)
         {
             if (!(sender is ChatItem selectedItem))
                 return;
@@ -112,13 +117,13 @@ namespace Client.Forms
             ChatName.Text = selectedItem.Chat.Name;
 
             // placeholder for loading messages asynchronously
-            await LoadMessagesAsync(selectedItem.Chat);
+            //await LoadCurrentChatMessages(selectedItem.Chat);
+            // TODO: Add message list request here
         }
 
-        private async Task LoadMessagesAsync(Chat chat)
+        private void LoadCurrentChatMessages()
         {
-            await Task.Delay(50);
-            MessageList.Controls.Clear();
+
         }
 
         private static Color DarkenColor(Color color, float factor)
@@ -137,7 +142,6 @@ namespace Client.Forms
         private void OnCreateChatClicked(object sender, EventArgs e)
         {
             CreateChatButtonClicked?.Invoke(this, EventArgs.Empty);
-            LoadChats();
         }
 
         private void OnAddMemberClicked(object sender, EventArgs e)
