@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Server.Database
@@ -24,28 +22,40 @@ namespace Server.Database
             }
         }
 
-        public List<Message> GetChatMessages(int chatId)
+        public List<KeyValuePair<string, Message>> GetChatMessages(Chat chat)
         {
             const string query = @"
-                SELECT * 
+                SELECT Messages.Id, ChatId, SenderId, Users.Name as SenderName, Timestamp, Content
                 FROM Messages
+                JOIN Users ON Messages.SenderId = Users.Id
                 WHERE ChatId = @ChatId
                 ORDER BY Timestamp ASC;";
-            List<Message> messages = new List<Message>();
+
+            List<KeyValuePair<string, Message>> messages = new List<KeyValuePair<string, Message>>();
+
             using (var cmd = new SQLiteCommand(query, _connection))
             {
-                cmd.Parameters.AddWithValue("@ChatId", chatId);
+                cmd.Parameters.AddWithValue("@ChatId", chat.Id);
+
                 using (var reader = cmd.ExecuteReader())
                 {
-                    messages.Add(new Message
+                    while (reader.Read())
                     {
-                        SenderId = reader.GetInt32(reader.GetOrdinal("SenderId")),
-                        Timestamp = reader.GetString(reader.GetOrdinal("Timestamp")),
-                        Content = reader.GetString(reader.GetOrdinal("Content"))
-                    });
+                        string senderName = reader.GetString(reader.GetOrdinal("SenderName"));
+                        Message message = new Message
+                        {
+                            SenderId = reader.GetInt32(reader.GetOrdinal("SenderId")),
+                            Timestamp = reader.GetString(reader.GetOrdinal("Timestamp")),
+                            Content = reader.GetString(reader.GetOrdinal("Content"))
+                        };
+
+                        messages.Add(new KeyValuePair<string, Message>(senderName, message));
+                    }
                 }
             }
+
             return messages;
         }
+
     }
 }

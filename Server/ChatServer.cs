@@ -27,23 +27,20 @@ namespace Server
             public User LoggedUser { get; set; }
         }
 
-        // Use TcpClient as key (consistent with original approach) but store a richer session value
         private static readonly ConcurrentDictionary<TcpClient, ClientSession> clients
             = new ConcurrentDictionary<TcpClient, ClientSession>();
 
-        // New: logged-in users dictionary keyed by User.Id for fast lookup of currently authenticated sessions.
-        // Value is the ClientSession associated with that logged-in user.
         private static readonly ConcurrentDictionary<int, ClientSession> loggedInUsers
             = new ConcurrentDictionary<int, ClientSession>();
 
         static async Task Main()
         {
-            IPAddress localAddr = IPAddress.Any; // Listen on all interfaces
+            IPAddress localAddr = IPAddress.Any;
             int port = 6969;
 
             TcpListener server = new TcpListener(localAddr, port);
             server.Start();
-            Console.WriteLine($"Chat Server listening on {localAddr}:{port}");
+            Console.Write($"Chat Server listening on {localAddr}:{port}\r\n");
 
             while (true)
             {
@@ -51,14 +48,13 @@ namespace Server
                 {
                     TcpClient tcpClient = await server.AcceptTcpClientAsync();
                     string ep = tcpClient.Client?.RemoteEndPoint?.ToString() ?? "Unknown";
-                    Console.WriteLine($"Client connected: {ep}");
+                    Console.Write($"Client connected: {ep}\r\n");
 
-                    // Fire-and-forget the handler (we're logging inside)
                     _ = Task.Run(() => HandleClient(tcpClient));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error accepting client: {ex}");
+                    Console.Write($"Error accepting client: {ex}\r\n");
                 }
             }
         }
@@ -94,112 +90,112 @@ namespace Server
                         switch (msg.MessageType)
                         {
                             case NetworkMessageType.Signup:
-                                {
-                                    var user = msg.GetPayload<User>();
-                                    await HandleSignUp(session, user);
-                                    break;
-                                }
+                            {
+                                var user = msg.GetPayload<User>();
+                                await HandleSignUp(session, user);
+                                break;
+                            }
 
                             case NetworkMessageType.Login:
-                                {
-                                    var user = msg.GetPayload<User>();
-                                    await HandleLogIn(session, user);
-                                    break;
-                                }
+                            {
+                                var user = msg.GetPayload<User>();
+                                await HandleLogIn(session, user);
+                                break;
+                            }
 
                             case NetworkMessageType.Logout:
-                                {
-                                    await HandleLogout(session);
-                                    // After logout we break the loop and cleanup (client closed in logout)
-                                    return;
-                                }
+                            {
+                                await HandleLogout(session);
+                                return;
+                            }
 
-                            case NetworkMessageType.ListChats:
-                                {
-                                    var user = msg.GetPayload<User>();
-                                    await HandleListChats(session, user);
-                                    break;
-                                }
+                            case NetworkMessageType.GetChats:
+                            {
+                                var user = msg.GetPayload<User>();
+                                await HandleGetChats(session, user);
+                                break;
+                            }
 
-                            case NetworkMessageType.ListUsers:
-                                {
-                                    await HandleListUsers(session);
-                                    break;
-                                }
+                            case NetworkMessageType.GetUsers:
+                            {
+                                await HandleGetUsers(session);
+                                break;
+                            }
 
                             case NetworkMessageType.CreateChat:
+                            {
+                                // Payload is a composite: [ Chat, List<User> ]
+                                JsonElement element = JsonSerializer.Deserialize<JsonElement>(msg.Payload);
+
+                                try
                                 {
-                                    // Payload is a composite: [ Chat, List<User> ]
-                                    if (string.IsNullOrEmpty(msg.Payload))
+                                    JsonElement chatEl = element[0];
+                                    JsonElement usersEl = element[1];
+
+                                    Chat chat = chatEl.Deserialize<Chat>();
+                                    List<User> users = usersEl.Deserialize<List<User>>();
+
+                                    if (chat == null || users == null)
                                     {
-                                        await SendError(session, "CreateChat payload missing");
+                                        await SendError(session, "Failed to parse chat or users");
                                         break;
                                     }
 
-                                    JsonElement element = JsonSerializer.Deserialize<JsonElement>(msg.Payload);
-
-                                    if (element.ValueKind != JsonValueKind.Array || element.GetArrayLength() < 2)
-                                    {
-                                        await SendError(session, "Invalid CreateChat payload format");
-                                        break;
-                                    }
-
-                                    try
-                                    {
-                                        JsonElement chatEl = element[0];
-                                        JsonElement usersEl = element[1];
-
-                                        Chat chat = chatEl.Deserialize<Chat>();
-                                        List<User> users = usersEl.Deserialize<List<User>>();
-
-                                        if (chat == null || users == null)
-                                        {
-                                            await SendError(session, "Failed to parse chat or users");
-                                            break;
-                                        }
-
-                                        await HandleCreateChat(session, chat, users);
-                                    }
-                                    catch (JsonException jex)
-                                    {
-                                        Console.WriteLine($"CreateChat JSON parse error: {jex}");
-                                        await SendError(session, "Invalid CreateChat payload");
-                                    }
-
-                                    break;
+                                    await HandleCreateChat(session, chat, users);
                                 }
+                                catch (JsonException jex)
+                                {
+                                    Console.Write($"CreateChat JSON parse error: {jex}\r\n");
+                                    await SendError(session, "Invalid CreateChat payload");
+                                }
+
+                                break;
+                            }
+
+                            case NetworkMessageType.GetMessages:
+                            {
+                                var chat = msg.GetPayload<Chat>();
+                                await HandleGetMessages(session, chat);
+                                break;
+                            }
 
                             case NetworkMessageType.ChatMessage:
+                            {
+                                var message = msg.GetPayload<KeyValuePair<string, Message>>();
+                                await HandleChatMessage(message.Key, message.Value);
+                                break;
+                            }
+
                             case NetworkMessageType.AddMember:
-                                {
-                                    Console.WriteLine($"Unhandled message type: {msg.MessageType}");
-                                    break;
-                                }
+                            {
+                                Console.Write($"Unhandled message type: {msg.MessageType}\r\n");
+                                break;
+                            }
 
                             default:
-                                Console.WriteLine($"Unknown message type: {msg.MessageType}");
+                                Console.Write($"Unknown message type: {msg.MessageType}\r\n");
                                 break;
                         }
                     }
                     catch (JsonException jex)
                     {
-                        Console.WriteLine($"JSON deserialization error from {ep}: {jex}");
+                        Console.Write($"JSON deserialization error from {ep}: {jex}\r\n");
                         if (clients.TryGetValue(tcpClient, out var c)) await SendError(c, "Invalid message format.");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error processing message from {ep}: {ex}");
+                        Console.Write($"Error processing message from {ep}: {ex}\r\n");
                         if (clients.TryGetValue(tcpClient, out var c)) await SendError(c, "Internal server error.");
                     }
                 }
             }
             catch (IOException)
             {
-                Console.WriteLine($"Client disconnected abruptly: {ep}");
+                Console.Write($"Client disconnected abruptly: {ep}\r\n");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error with client {ep}: {ex}");
+                Console.Write($"Error with client {ep}: {ex}\r\n");
             }
             finally
             {
@@ -214,7 +210,7 @@ namespace Server
                     if (loggedInUsers.TryGetValue(uid, out var existing) && existing == removed)
                     {
                         loggedInUsers.TryRemove(uid, out _);
-                        Console.WriteLine($"Removed user {removed.LoggedUser.Name} (id={uid}) from loggedInUsers due to disconnect.");
+                        Console.Write($"Removed user {removed.LoggedUser.Name} (id={uid}) from loggedInUsers due to disconnect.\r\n");
                     }
                 }
 
@@ -224,7 +220,7 @@ namespace Server
                 }
                 catch { /* ignore */ }
 
-                Console.WriteLine($"Client disconnected: {ep}");
+                Console.Write($"Client disconnected: {ep}\r\n");
             }
         }
 
@@ -254,7 +250,7 @@ namespace Server
                 Payload = JsonSerializer.Serialize("Signup successful")
             });
 
-            Console.WriteLine($"User signed up: {user.Name}");
+            Console.Write($"User signed up: {user.Name}\r\n");
         }
 
         private static async Task HandleLogIn(ClientSession session, User user)
@@ -288,7 +284,7 @@ namespace Server
                 // someone else already has a session for this user id
                 session.LoggedUser = null;
                 await SendError(session, "User already logged in from another session");
-                Console.WriteLine($"Login blocked for {storedUser.Name}: already logged in elsewhere.");
+                Console.Write($"Login blocked for {storedUser.Name}: already logged in elsewhere.\r\n");
                 return;
             }
 
@@ -298,7 +294,7 @@ namespace Server
                 Payload = JsonSerializer.Serialize(storedUser)
             });
 
-            Console.WriteLine($"User logged in: {storedUser.Name} (from {session.Client.Client?.RemoteEndPoint})");
+            Console.Write($"User logged in: {storedUser.Name} (from {session.Client.Client?.RemoteEndPoint})\r\n");
         }
 
         private static async Task HandleLogout(ClientSession session)
@@ -318,7 +314,7 @@ namespace Server
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error sending logout response to {endpoint}: {ex.Message}");
+                Console.Write($"Error sending logout response to {endpoint}: {ex.Message}\r\n");
             }
             finally
             {
@@ -329,7 +325,7 @@ namespace Server
                     if (loggedInUsers.TryGetValue(uid, out var existing) && existing == session)
                     {
                         loggedInUsers.TryRemove(uid, out _);
-                        Console.WriteLine($"Removed user {session.LoggedUser.Name} (id={uid}) from loggedInUsers on logout.");
+                        Console.Write($"Removed user {session.LoggedUser.Name} (id={uid}) from loggedInUsers on logout.\r\n");
                     }
                     session.LoggedUser = null;
                 }
@@ -342,36 +338,36 @@ namespace Server
                 }
                 catch { /* ignore */ }
 
-                Console.WriteLine($"Client logged out: {endpoint}");
+                Console.Write($"Client logged out: {endpoint}\r\n");
             }
         }
 
-        private static async Task HandleListChats(ClientSession session, User user)
+        private static async Task HandleGetChats(ClientSession session, User user)
         {
             if (user == null)
             {
-                await SendError(session, "Invalid user for ListChats");
+                await SendError(session, "Invalid user for GetChats");
                 return;
             }
 
             var chats = database.GetUserChats(user.Id);
             await SendResponse(session, new NetworkMessage
             {
-                MessageType = NetworkMessageType.ListChats,
+                MessageType = NetworkMessageType.GetChats,
                 Payload = JsonSerializer.Serialize(chats)
             });
         }
 
-        private static async Task HandleListUsers(ClientSession session)
+        private static async Task HandleGetUsers(ClientSession session)
         {
             var users = database.GetAllUsers();
             await SendResponse(session, new NetworkMessage
             {
-                MessageType = NetworkMessageType.ListUsers,
+                MessageType = NetworkMessageType.GetUsers,
                 Payload = JsonSerializer.Serialize(users)
             });
 
-            Console.WriteLine($"Sent user list to {session.Client.Client?.RemoteEndPoint}");
+            Console.Write($"Sent user list to {session.Client.Client?.RemoteEndPoint}\r\n");
         }
 
         private static async Task HandleCreateChat(ClientSession session, Chat chat, List<User> users)
@@ -395,13 +391,34 @@ namespace Server
                 });
             }
 
-            await SendResponse(session, new NetworkMessage
+            await BroadcastMessage(new NetworkMessage
             {
                 MessageType = NetworkMessageType.CreateChat,
                 Payload = JsonSerializer.Serialize(chat)
             });
 
-            Console.WriteLine($"Chat created: {chat.Name} (id={chat.Id}) by {session.LoggedUser?.Name ?? "unknown"}");
+            Console.Write($"Chat created: {chat.Name} (id={chat.Id}) by {session.LoggedUser?.Name ?? "unknown"}\r\n");
+        }
+
+        private static async Task HandleGetMessages(ClientSession session, Chat chat)
+        {
+            List<KeyValuePair<string, Message>> messages = database.GetChatMessages(chat);
+            await SendResponse(session, new NetworkMessage
+            {
+                MessageType = NetworkMessageType.GetMessages,
+                Payload = JsonSerializer.Serialize(messages)
+            });
+            Console.Write($"Sent message list to {session.Client.Client?.RemoteEndPoint}\r\n");
+        }
+
+        private static async Task HandleChatMessage(string sender, Message message)
+        {
+            await database.InsertMessage(message);
+            await BroadcastMessage(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.ChatMessage,
+                Payload = JsonSerializer.Serialize(new KeyValuePair<string, Message>(sender, message))
+            });
         }
 
         #endregion
@@ -428,13 +445,13 @@ namespace Server
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Broadcast write error to {session.Client.Client?.RemoteEndPoint}: {ex}");
+                    Console.Write($"Broadcast write error to {session.Client.Client?.RemoteEndPoint}: {ex}\r\n");
                     clients.TryRemove(session.Client, out _);
                     try { session.Client.Close(); } catch { }
                 }
             }
 
-            Console.WriteLine("Broadcasted message to clients");
+            Console.Write("Broadcasted message to clients\r\n");
             await Task.CompletedTask;
         }
 
@@ -453,13 +470,13 @@ namespace Server
             }
             catch (IOException ioex)
             {
-                Console.WriteLine($"Write IO error to {session.Client.Client?.RemoteEndPoint}: {ioex}");
+                Console.Write($"Write IO error to {session.Client.Client?.RemoteEndPoint}: {ioex}\r\n");
                 clients.TryRemove(session.Client, out _);
                 try { session.Client.Close(); } catch { }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Write error to {session.Client.Client?.RemoteEndPoint}: {ex}");
+                Console.Write($"Write error to {session.Client.Client?.RemoteEndPoint}: {ex}\r\n");
             }
 
             await Task.CompletedTask;

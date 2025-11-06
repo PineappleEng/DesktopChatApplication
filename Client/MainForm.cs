@@ -355,9 +355,9 @@ namespace Client
         private void HandleMessageSafe(NetworkMessage msg)
         {
             if (InvokeRequired)
-                BeginInvoke(new Action(() => Task.Run(() => HandleMessage(msg))));
+                BeginInvoke(new Action(() => HandleMessage(msg)));
             else
-                Task.Run(() => HandleMessage(msg));
+                HandleMessage(msg);
         }
 
         private async Task HandleMessage(NetworkMessage msg)
@@ -378,13 +378,11 @@ namespace Client
                 case NetworkMessageType.Login:
                 {
                     var user = msg.GetPayload<User>();
-                    //_loggedIn = true;
                     ShowChatForm(user);
                     break;
                 }
 
                 case NetworkMessageType.Logout:
-                    //_loggedIn = false;
                     ShowLogInForm();
                     break;
 
