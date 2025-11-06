@@ -23,7 +23,7 @@ namespace Client
         private StreamWriter _writer;
         private StreamReader _reader;
         private bool _listening = false;
-        private bool _loggedIn = false;
+        //private bool _loggedIn = false;
 
         public MainForm()
         {
@@ -87,7 +87,9 @@ namespace Client
                 _chatForm = new ChatForm();
                 _chatForm.LogOutButtonClicked += OnLogOutButtonClicked;
                 _chatForm.CreateChatButtonClicked += OnCreateChatButtonClicked;
+                _chatForm.SendMessageButtonClicked += OnSendMessageButtonClicked;
                 _chatForm.RequestChats += OnRequestChats;
+                _chatForm.RequestMessages += OnRequestMessages;
             }
 
             _chatForm.CurrentUser = user;
@@ -100,7 +102,11 @@ namespace Client
 
         private async void OnSignUpButtonClicked(User user)
         {
-            await SendMessageAsync(new NetworkMessage
+            if (_client == null || !_client.Connected)
+            {
+                await ConnectToServer();
+            }
+            await SendMessageToServer(new NetworkMessage
             {
                 MessageType = NetworkMessageType.Signup,
                 Payload = JsonSerializer.Serialize(user)
@@ -114,7 +120,11 @@ namespace Client
 
         private async void OnLogInButtonClicked(User user)
         {
-            await SendMessageAsync(new NetworkMessage
+            if (_client == null || !_client.Connected)
+            {
+                await ConnectToServer();
+            }
+            await SendMessageToServer(new NetworkMessage
             {
                 MessageType = NetworkMessageType.Login,
                 Payload = JsonSerializer.Serialize(user)
@@ -128,30 +138,40 @@ namespace Client
 
         private async void OnLogOutButtonClicked(object sender, EventArgs e)
         {
-            await SendMessageAsync(new NetworkMessage
+            await SendMessageToServer(new NetworkMessage
             {
                 MessageType = NetworkMessageType.Logout
             });
+            _client = null;
         }
 
         private async void OnRequestChats(User user)
         {
-            await SendMessageAsync(new NetworkMessage
+            await SendMessageToServer(new NetworkMessage
             {
-                MessageType = NetworkMessageType.ListChats,
+                MessageType = NetworkMessageType.GetChats,
                 Payload = JsonSerializer.Serialize(user)
+            });
+        }
+
+        private async void OnRequestMessages(Chat chat)
+        {
+            await SendMessageToServer(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.GetMessages,
+                Payload = JsonSerializer.Serialize(chat)
             });
         }
 
         private async void OnCreateChatButtonClicked(object sender, EventArgs e)
         {
-            await SendMessageAsync(new NetworkMessage
+            await SendMessageToServer(new NetworkMessage
             {
-                MessageType = NetworkMessageType.ListUsers
+                MessageType = NetworkMessageType.GetUsers
             });
         }
 
-        private async Task CreateChat(List<User> users)
+        private void CreateChat(List<User> users)
         {
             // Defensive: ensure there's a valid chat form and user context
             if (_chatForm == null || _chatForm.CurrentUser == null)
@@ -218,11 +238,11 @@ namespace Client
 
                     var payload = new List<object> { newChat, selectedUsers };
 
-                    await SendMessageAsync(new NetworkMessage
+                    Task.Run(() => SendMessageToServer(new NetworkMessage
                     {
                         MessageType = NetworkMessageType.CreateChat,
                         Payload = JsonSerializer.Serialize(payload)
-                    });
+                    }));
                 }
                 catch (Exception ex)
                 {
@@ -235,11 +255,28 @@ namespace Client
             }
         }
 
+        private async void OnSendMessageButtonClicked(int chatId, int senderId, string content, string sender)
+        {
+            await SendMessageToServer(new NetworkMessage
+            {
+                MessageType = NetworkMessageType.ChatMessage,
+                Payload = JsonSerializer.Serialize(new KeyValuePair<string, Common.Models.Message>(
+                    sender,
+                    new Common.Models.Message
+                    {
+                        ChatId = chatId,
+                        SenderId = senderId,
+                        Content = content
+                    }
+                ))
+            });
+        }
+
         #endregion
 
         #region TCP Client Logic
 
-        private async void MainForm_Load(object sender, EventArgs e)
+        private async Task ConnectToServer()
         {
             try
             {
@@ -294,7 +331,7 @@ namespace Client
             }
         }
 
-        private async Task SendMessageAsync(NetworkMessage msg)
+        private async Task SendMessageToServer(NetworkMessage msg)
         {
             try
             {
@@ -318,12 +355,12 @@ namespace Client
         private void HandleMessageSafe(NetworkMessage msg)
         {
             if (InvokeRequired)
-                BeginInvoke(new Action(() => HandleMessage(msg)));
+                BeginInvoke(new Action(() => Task.Run(() => HandleMessage(msg))));
             else
-                HandleMessage(msg);
+                Task.Run(() => HandleMessage(msg));
         }
 
-        private void HandleMessage(NetworkMessage msg)
+        private async Task HandleMessage(NetworkMessage msg)
         {
             switch (msg.MessageType)
             {
@@ -341,22 +378,22 @@ namespace Client
                 case NetworkMessageType.Login:
                 {
                     var user = msg.GetPayload<User>();
-                    _loggedIn = true;
+                    //_loggedIn = true;
                     ShowChatForm(user);
                     break;
                 }
 
                 case NetworkMessageType.Logout:
-                    _loggedIn = false;
+                    //_loggedIn = false;
                     ShowLogInForm();
                     break;
 
-                case NetworkMessageType.ListChats:
+                case NetworkMessageType.GetChats:
                     _chatForm.UserChatList = msg.GetPayload<List<Chat>>();
                     _chatForm.LoadChats();
                     break;
 
-                case NetworkMessageType.ListUsers:
+                case NetworkMessageType.GetUsers:
                 {
                     var allUsers = msg.GetPayload<List<User>>();
                     var users = new List<User>();
@@ -382,8 +419,36 @@ namespace Client
                 case NetworkMessageType.CreateChat:
                 {
                     var chat = msg.GetPayload<Chat>();
-                    _chatForm.CurrentChat = chat;
-                    _chatForm.UserChatList.Add(chat);
+                    await Task.Run(() => OnRequestChats(_chatForm.CurrentUser));
+                    if (_chatForm.UserChatList.Contains(chat))
+                    {
+                        _chatForm.CurrentChat = chat;
+                        _chatForm.LoadChats();
+                    }
+                    break;
+                }
+
+                case NetworkMessageType.GetMessages:
+                {
+                    var messages = msg.GetPayload<List<KeyValuePair<string, Common.Models.Message>>>();
+                    _chatForm.CurrentChatMessages = messages;
+                    _chatForm.LoadMessages();
+                    break;
+                }
+
+                case NetworkMessageType.ChatMessage:
+                {
+                    var message = msg.GetPayload<KeyValuePair<string, Common.Models.Message>>();
+                    if (message.Value.ChatId == _chatForm.CurrentChat.Id)
+                    {
+                        _chatForm.MessageList.SuspendLayout();
+                        _chatForm.InsertMessageBubble(
+                            message.Key,
+                            message.Value.Content,
+                            DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                            (message.Value.SenderId == _chatForm.CurrentUser.Id));
+                        _chatForm.MessageList.ResumeLayout(true);
+                    }
                     break;
                 }
 
@@ -399,7 +464,7 @@ namespace Client
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Task.Run(() => SendMessageAsync(new NetworkMessage
+            Task.Run(() => SendMessageToServer(new NetworkMessage
             {
                 MessageType = NetworkMessageType.Logout,
                 Payload = null

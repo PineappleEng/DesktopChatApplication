@@ -83,6 +83,16 @@ namespace Client.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap laugh_emoji {
+            get {
+                object obj = ResourceManager.GetObject("laugh_emoji", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap login {
             get {
                 object obj = ResourceManager.GetObject("login", resourceCulture);
@@ -116,6 +126,36 @@ namespace Client.Properties {
         internal static System.Drawing.Bitmap signup {
             get {
                 object obj = ResourceManager.GetObject("signup", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap smile_emoji {
+            get {
+                object obj = ResourceManager.GetObject("smile_emoji", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap thumbs_emoji {
+            get {
+                object obj = ResourceManager.GetObject("thumbs_emoji", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap tux_emoji {
+            get {
+                object obj = ResourceManager.GetObject("tux_emoji", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

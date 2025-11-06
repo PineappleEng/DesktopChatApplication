@@ -137,9 +137,9 @@
             // 
             // RightPanel
             // 
-            this.RightPanel.Controls.Add(this.MessageList);
             this.RightPanel.Controls.Add(this.ChatInput);
             this.RightPanel.Controls.Add(this.ChatDetails);
+            this.RightPanel.Controls.Add(this.MessageList);
             this.RightPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.RightPanel.Location = new System.Drawing.Point(265, 0);
             this.RightPanel.Name = "RightPanel";
@@ -149,10 +149,9 @@
             // MessageList
             // 
             this.MessageList.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(146)))), ((int)(((byte)(202)))), ((int)(((byte)(230)))));
-            this.MessageList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.MessageList.Location = new System.Drawing.Point(0, 65);
             this.MessageList.Name = "MessageList";
-            this.MessageList.Size = new System.Drawing.Size(619, 451);
+            this.MessageList.Size = new System.Drawing.Size(654, 473);
             this.MessageList.TabIndex = 2;
             // 
             // ChatInput
@@ -277,9 +276,7 @@
         private System.Windows.Forms.Panel FillPanel;
         private System.Windows.Forms.Panel ChatDetails;
         private System.Windows.Forms.Panel UserPanel;
-        private System.Windows.Forms.FlowLayoutPanel ChatList;
         private System.Windows.Forms.Panel ChatInput;
-        private System.Windows.Forms.FlowLayoutPanel MessageList;
         private Controls.RoundedPicture UserPicture;
         private Controls.RoundedButton LogOut;
         private Controls.RoundedPicture ChatPicture;
@@ -289,5 +286,7 @@
         private System.Windows.Forms.RichTextBox MessageInput;
         private System.Windows.Forms.Button SendMessage;
         private System.Windows.Forms.Button EmojiMenu;
+        public System.Windows.Forms.FlowLayoutPanel ChatList;
+        public System.Windows.Forms.FlowLayoutPanel MessageList;
     }
 }

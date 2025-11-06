@@ -15,8 +15,9 @@ namespace Common.Network
         ChatMessage, //TODO
         CreateChat,
         AddMember, //TODO
-        ListUsers, 
-        ListChats,
+        GetUsers, 
+        GetChats,
+        GetMessages,
 
         Error
     }

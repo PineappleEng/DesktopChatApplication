@@ -86,6 +86,12 @@
     <Compile Include="Controls\ChatItem.Designer.cs">
       <DependentUpon>ChatItem.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\MessageBubble.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\MessageBubble.Designer.cs">
+      <DependentUpon>MessageBubble.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\RoundedButton.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -132,6 +138,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Controls\ChatItem.resx">
       <DependentUpon>ChatItem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\MessageBubble.resx">
+      <DependentUpon>MessageBubble.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\RoundedButton.resx">
       <DependentUpon>RoundedButton.cs</DependentUpon>
