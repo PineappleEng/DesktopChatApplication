@@ -31,8 +31,8 @@
             this.ChatNameLabel = new System.Windows.Forms.Label();
             this.ChatNameField = new System.Windows.Forms.TextBox();
             this.CheckedListBox = new System.Windows.Forms.CheckedListBox();
-            this.CreateButton = new System.Windows.Forms.Button();
-            this.CancelButton = new System.Windows.Forms.Button();
+            this.Create = new System.Windows.Forms.Button();
+            this.Cancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // ChatNameLabel
@@ -65,25 +65,25 @@
             // 
             // CreateButton
             // 
-            this.CreateButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.CreateButton.Font = new System.Drawing.Font("Segoe UI Emoji", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CreateButton.Location = new System.Drawing.Point(12, 229);
-            this.CreateButton.Name = "CreateButton";
-            this.CreateButton.Size = new System.Drawing.Size(116, 30);
-            this.CreateButton.TabIndex = 3;
-            this.CreateButton.Text = "Create";
-            this.CreateButton.UseVisualStyleBackColor = true;
+            this.Create.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.Create.Font = new System.Drawing.Font("Segoe UI Emoji", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Create.Location = new System.Drawing.Point(12, 229);
+            this.Create.Name = "CreateButton";
+            this.Create.Size = new System.Drawing.Size(116, 30);
+            this.Create.TabIndex = 3;
+            this.Create.Text = "Create";
+            this.Create.UseVisualStyleBackColor = true;
             // 
             // CancelButton
             // 
-            this.CancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.CancelButton.Font = new System.Drawing.Font("Segoe UI Emoji", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CancelButton.Location = new System.Drawing.Point(166, 229);
-            this.CancelButton.Name = "CancelButton";
-            this.CancelButton.Size = new System.Drawing.Size(116, 30);
-            this.CancelButton.TabIndex = 4;
-            this.CancelButton.Text = "Cancel";
-            this.CancelButton.UseVisualStyleBackColor = true;
+            this.Cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.Cancel.Font = new System.Drawing.Font("Segoe UI Emoji", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Cancel.Location = new System.Drawing.Point(166, 229);
+            this.Cancel.Name = "CancelButton";
+            this.Cancel.Size = new System.Drawing.Size(116, 30);
+            this.Cancel.TabIndex = 4;
+            this.Cancel.Text = "Cancel";
+            this.Cancel.UseVisualStyleBackColor = true;
             // 
             // CreateChatPrompt
             // 
@@ -91,8 +91,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(158)))), ((int)(((byte)(188)))));
             this.ClientSize = new System.Drawing.Size(294, 271);
-            this.Controls.Add(this.CancelButton);
-            this.Controls.Add(this.CreateButton);
+            this.Controls.Add(this.Cancel);
+            this.Controls.Add(this.Create);
             this.Controls.Add(this.CheckedListBox);
             this.Controls.Add(this.ChatNameField);
             this.Controls.Add(this.ChatNameLabel);
@@ -112,7 +112,7 @@
         private System.Windows.Forms.Label ChatNameLabel;
         private System.Windows.Forms.TextBox ChatNameField;
         private System.Windows.Forms.CheckedListBox CheckedListBox;
-        private System.Windows.Forms.Button CreateButton;
-        private System.Windows.Forms.Button CancelButton;
+        private System.Windows.Forms.Button Create;
+        private System.Windows.Forms.Button Cancel;
     }
 }

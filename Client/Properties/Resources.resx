@@ -139,4 +139,16 @@
   <data name="create_chat" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\plus.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="laugh_emoji" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\laugh_emoji.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="smile_emoji" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\smile_emoji.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="thumbs_emoji" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\thumbs_emoji.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="tux_emoji" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\tux_emoji.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
