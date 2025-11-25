@@ -1,23 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Common.Network
+﻿namespace Common.Network
 {
     public enum NetworkMessageType
     {
-        Login, 
-        Signup, 
+        Login,
+        LoginResponse,
+        Signup,
+        SignupResponse,
         Logout,
+        LogoutResponse,
 
-        ChatMessage, //TODO
+        ChatMessage,
+        ChatMessageResponse,
         CreateChat,
-        AddMember, //TODO
+        CreateChatResponse,
+        AddMember,
+        AddMemberResponse,
         GetUsers, 
+        GetUsersResponse,
         GetChats,
+        GetChatsResponse,
         GetMessages,
+        GetMessagesResponse,
 
         Error
     }

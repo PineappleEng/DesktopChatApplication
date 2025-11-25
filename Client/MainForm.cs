@@ -3,7 +3,6 @@ using Common.Models;
 using Common.Network;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Net.Sockets;
 using System.Text.Json;
@@ -23,8 +22,6 @@ namespace Client
         private StreamWriter _writer;
         private StreamReader _reader;
         private bool _listening = false;
-        //private bool _loggedIn = false;
-
         public MainForm()
         {
             InitializeComponent();
@@ -369,29 +366,29 @@ namespace Client
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     break;
 
-                case NetworkMessageType.Signup:
+                case NetworkMessageType.SignupResponse:
                     MessageBox.Show("Signed up successfully!",
                         "Signup", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     ShowLogInForm();
                     break;
 
-                case NetworkMessageType.Login:
+                case NetworkMessageType.LoginResponse:
                 {
                     var user = msg.GetPayload<User>();
                     ShowChatForm(user);
                     break;
                 }
 
-                case NetworkMessageType.Logout:
+                case NetworkMessageType.LogoutResponse:
                     ShowLogInForm();
                     break;
 
-                case NetworkMessageType.GetChats:
+                case NetworkMessageType.GetChatsResponse:
                     _chatForm.UserChatList = msg.GetPayload<List<Chat>>();
                     _chatForm.LoadChats();
                     break;
 
-                case NetworkMessageType.GetUsers:
+                case NetworkMessageType.GetUsersResponse:
                 {
                     var allUsers = msg.GetPayload<List<User>>();
                     var users = new List<User>();
@@ -414,7 +411,7 @@ namespace Client
                     break;
                 }
 
-                case NetworkMessageType.CreateChat:
+                case NetworkMessageType.CreateChatResponse:
                 {
                     var chat = msg.GetPayload<Chat>();
                     await Task.Run(() => OnRequestChats(_chatForm.CurrentUser));
@@ -426,7 +423,7 @@ namespace Client
                     break;
                 }
 
-                case NetworkMessageType.GetMessages:
+                case NetworkMessageType.GetMessagesResponse:
                 {
                     var messages = msg.GetPayload<List<KeyValuePair<string, Common.Models.Message>>>();
                     _chatForm.CurrentChatMessages = messages;
@@ -434,7 +431,7 @@ namespace Client
                     break;
                 }
 
-                case NetworkMessageType.ChatMessage:
+                case NetworkMessageType.ChatMessageResponse:
                 {
                     var message = msg.GetPayload<KeyValuePair<string, Common.Models.Message>>();
                     if (message.Value.ChatId == _chatForm.CurrentChat.Id)
