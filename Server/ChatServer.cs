@@ -246,7 +246,7 @@ namespace Server
 
             await SendResponse(session, new NetworkMessage
             {
-                MessageType = NetworkMessageType.Signup,
+                MessageType = NetworkMessageType.SignupResponse,
                 Payload = JsonSerializer.Serialize("Signup successful")
             });
 
@@ -290,7 +290,7 @@ namespace Server
 
             await SendResponse(session, new NetworkMessage
             {
-                MessageType = NetworkMessageType.Login,
+                MessageType = NetworkMessageType.LoginResponse,
                 Payload = JsonSerializer.Serialize(storedUser)
             });
 
@@ -308,7 +308,7 @@ namespace Server
                 // Send logout acknowledgment before closing
                 await SendResponse(session, new NetworkMessage
                 {
-                    MessageType = NetworkMessageType.Logout,
+                    MessageType = NetworkMessageType.LogoutResponse,
                     Payload = JsonSerializer.Serialize("Logout successful")
                 });
             }
@@ -353,7 +353,7 @@ namespace Server
             var chats = database.GetUserChats(user.Id);
             await SendResponse(session, new NetworkMessage
             {
-                MessageType = NetworkMessageType.GetChats,
+                MessageType = NetworkMessageType.GetChatsResponse,
                 Payload = JsonSerializer.Serialize(chats)
             });
         }
@@ -363,7 +363,7 @@ namespace Server
             var users = database.GetAllUsers();
             await SendResponse(session, new NetworkMessage
             {
-                MessageType = NetworkMessageType.GetUsers,
+                MessageType = NetworkMessageType.GetUsersResponse,
                 Payload = JsonSerializer.Serialize(users)
             });
 
@@ -393,7 +393,7 @@ namespace Server
 
             await BroadcastMessage(new NetworkMessage
             {
-                MessageType = NetworkMessageType.CreateChat,
+                MessageType = NetworkMessageType.CreateChatResponse,
                 Payload = JsonSerializer.Serialize(chat)
             });
 
@@ -405,7 +405,7 @@ namespace Server
             List<KeyValuePair<string, Message>> messages = database.GetChatMessages(chat);
             await SendResponse(session, new NetworkMessage
             {
-                MessageType = NetworkMessageType.GetMessages,
+                MessageType = NetworkMessageType.GetMessagesResponse,
                 Payload = JsonSerializer.Serialize(messages)
             });
             Console.Write($"Sent message list to {session.Client.Client?.RemoteEndPoint}\r\n");
@@ -416,7 +416,7 @@ namespace Server
             await database.InsertMessage(message);
             await BroadcastMessage(new NetworkMessage
             {
-                MessageType = NetworkMessageType.ChatMessage,
+                MessageType = NetworkMessageType.ChatMessageResponse,
                 Payload = JsonSerializer.Serialize(new KeyValuePair<string, Message>(sender, message))
             });
         }
